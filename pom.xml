@@ -28,7 +28,7 @@
           </descriptorRefs>
           <archive>
             <manifest>
-              <mainClass>org.sample.convert.Main</mainClass>
+              <mainClass>org.sample.DiffMain</mainClass>
             </manifest>
           </archive>
         </configuration>
