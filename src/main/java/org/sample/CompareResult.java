@@ -1,27 +1,29 @@
 package org.sample;
 
+import java.util.List;
+
 public class CompareResult {
     private boolean diff = false;
-    private String description = "";
+    private List<String> descriptions;
     private String oldText = "";
     private String newText = "";
 
     public CompareResult() {
     }
 
-    public CompareResult(String o, String n, boolean diff, String description) {
+    public CompareResult(String o, String n, boolean diff, List<String> descriptions) {
         this.oldText = o.trim();
         this.newText = n.trim();
         this.diff = diff;
-        this.description = description;
+        this.descriptions = descriptions;
     }
 
     public boolean isDiff() {
         return diff;
     }
 
-    public String getDescription() {
-        return description;
+    public List<String> getDescriptions() {
+        return descriptions;
     }
 
     public String getOldText() {

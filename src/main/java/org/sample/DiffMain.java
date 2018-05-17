@@ -2,13 +2,77 @@ package org.sample;
 
 import java.io.File;
 import java.io.FilenameFilter;
+import java.io.IOException;
+import java.nio.charset.Charset;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 public class DiffMain {
 
+    private static final Logger LOGGER = LoggerFactory.getLogger(DiffMain.class);
+    private static final int ERROR_CODE = 1;
+    private static final String DEFAULT_CHARSET = "MS932";
+    private static final String CHARSET_KEY = "DiffMain.charset";
+    private static final String DATE_FORMAT = "yyyyMMddHHmmss";
+
     public static void main(String[] args) {
-        validateArgs(args);
+        LOGGER.info("Start");
+        try {
+            validateArgs(args);
+        } catch (Throwable t) {
+            LOGGER.error("引数精査でエラー発生", t);
+            System.exit(ERROR_CODE);
+        }
+        File oldDir = new File(args[0]);
+        File newDir = new File(args[1]);
+        try {
+            LOGGER.info("old directory=" + oldDir.getCanonicalPath() + ", new directory=" + newDir.getCanonicalPath());
+        } catch (IOException e) {
+            LOGGER.error("エラーが発生しました。", e);
+            System.exit(ERROR_CODE);
+        }
+        Map<String, File> oldFiles = searchHtml(oldDir);
+        Map<String, File> newFiles = searchHtml(newDir);
+        Map<String, List<CompareResult>> resultMap = new TreeMap<>();
+        String charsetName = System.getProperty(CHARSET_KEY, DEFAULT_CHARSET);
+        Charset charset = Charset.forName(charsetName);
+        for (Map.Entry<String, File> entry : oldFiles.entrySet()) {
+            String key = entry.getKey();
+            LOGGER.info("ファイル：" + key + "の比較を行います。");
+            try {
+                List<CompareResult> result = HtmlCompareUtil.compare(oldFiles.get(key), newFiles.get(key), charset);
+                resultMap.put(key, result);
+            } catch (IllegalArgumentException e) {
+                LOGGER.warn(key + "はnewとoldで行数が異なります。", e);
+            } catch (Throwable ｔ) {
+                LOGGER.error("エラーが発生しました。", ｔ);
+                System.exit(ERROR_CODE);
+            }
+        }
+        String outputPath = outputFilePath(args[0]);
+        LOGGER.info("結果を出力します。output=" + outputPath);
+        try {
+            ResultWriter writer = new ResultWriter(outputPath);
+            writer.writeResult(resultMap);
+            writer.close();
+        } catch (Throwable ｔ) {
+            LOGGER.error("エラーが発生しました。", ｔ);
+            System.exit(ERROR_CODE);
+        }
+        LOGGER.info("End");
+    }
+
+    private static String outputFilePath(String arg0) {
+        String parent = new File(arg0).getParent();
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern(DATE_FORMAT);
+        LocalDateTime ldt = LocalDateTime.now();
+        return parent + "/" + formatter.format(ldt) + "_DiffHtml.xlsx";
     }
 
     private static void validateArgs(String[] args) {
