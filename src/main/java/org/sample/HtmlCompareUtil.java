@@ -15,8 +15,11 @@ import org.jsoup.nodes.Attribute;
 import org.jsoup.nodes.Attributes;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class HtmlCompareUtil {
+    private static final Logger LOGGER = LoggerFactory.getLogger(HtmlCompareUtil.class);
     private static final String STRUTS_TOKEN_KEY = "org.apache.struts.taglib.html.TOKEN";
     private static final String STRUTS_TOKEN_REGEX = STRUTS_TOKEN_KEY + "=[\\da-f]+";
     private static final String DATE_MIN_REGEX = "[\\d]{4}/[\\d]{2}/[\\d]{2} [\\d]{2}:[\\d]{2}";
@@ -42,7 +45,9 @@ public class HtmlCompareUtil {
 
     public static final List<String> parseHtml(File html, Charset charset) throws IOException {
         List<String> lines = new ArrayList<>();
-        try (BufferedReader reader = new BufferedReader(new StringReader(Jsoup.parse(html, charset.name()).html()))) {
+        String htmlString = Jsoup.parse(html, charset.name()).html();
+        LOGGER.info(html.getCanonicalPath() + " :=\r\n" + htmlString);
+        try (BufferedReader reader = new BufferedReader(new StringReader(htmlString))) {
             String line = null;
             while ((line = reader.readLine()) != null) {
                 lines.add(line);
