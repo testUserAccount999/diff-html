@@ -4,34 +4,36 @@ import java.util.List;
 
 public class CompareResult {
     private boolean diff = false;
-    private List<String> descriptions;
+    private List<CompareDescription> compareDescriptions;
     private String oldText = "";
     private String newText = "";
 
     public CompareResult() {
     }
 
-    public CompareResult(String o, String n, boolean diff, List<String> descriptions) {
+    public CompareResult(String o, String n, List<CompareDescription> compareDescriptions, boolean diff) {
         this.oldText = o.trim();
         this.newText = n.trim();
+        this.compareDescriptions = compareDescriptions;
         this.diff = diff;
-        this.descriptions = descriptions;
     }
 
     public boolean isDiff() {
         return diff;
     }
 
-    public List<String> getDescriptions() {
-        return descriptions;
-    }
-
+    @Deprecated
     public String getOldText() {
         return oldText;
     }
 
+    @Deprecated
     public String getNewText() {
         return newText;
+    }
+
+    public List<CompareDescription> getCompareDescriptions() {
+        return compareDescriptions;
     }
 
 }

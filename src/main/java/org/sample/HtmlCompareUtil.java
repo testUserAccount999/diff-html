@@ -7,6 +7,8 @@ import java.io.StringReader;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
+import java.util.TreeSet;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -46,7 +48,7 @@ public class HtmlCompareUtil {
     public static final List<String> parseHtml(File html, Charset charset) throws IOException {
         List<String> lines = new ArrayList<>();
         String htmlString = Jsoup.parse(html, charset.name()).html();
-        LOGGER.info(html.getCanonicalPath() + " :=\r\n" + htmlString);
+        LOGGER.trace(html.getCanonicalPath() + " :=\r\n" + htmlString);
         try (BufferedReader reader = new BufferedReader(new StringReader(htmlString))) {
             String line = null;
             while ((line = reader.readLine()) != null) {
@@ -59,14 +61,16 @@ public class HtmlCompareUtil {
     public static final CompareResult compare(String o, String n) {
         Elements oldElements = Jsoup.parse(o).getAllElements();
         Elements newElements = Jsoup.parse(n).getAllElements();
-        List<String> descriptions = new ArrayList<>();
-        // tagのサイズを比較
+        List<CompareDescription> compareDescriptions = new ArrayList<>();
+        // tagの数を比較
         if (oldElements.size() != newElements.size()) {
             StringBuilder des = new StringBuilder("tag数が一致しません。old=");
             des.append(oldElements.size()).append(", new=").append(newElements.size());
-            descriptions.add(des.toString());
+            // descriptions.add(des.toString());
+            CompareDescription compareDescription = new CompareDescription(o, n, des.toString());
+            compareDescriptions.add(compareDescription);
             // サイズが異なると以降の精査できないので返却する
-            return new CompareResult(o, n, true, descriptions);
+            return new CompareResult(o, n, compareDescriptions, true);
         }
         // tagごとに比較
         for (int i = 0; i < oldElements.size(); i++) {
@@ -82,7 +86,9 @@ public class HtmlCompareUtil {
                 StringBuilder des = new StringBuilder("tagの順序が異なります。index=");
                 des.append(i).append(", old=").append(oldElement.tagName()).append(", new=")
                         .append(newElement.tagName());
-                descriptions.add(des.toString());
+                CompareDescription compareDescription = new CompareDescription(oldElement.toString(),
+                        newElement.toString(), des.toString());
+                compareDescriptions.add(compareDescription);
                 // tagが異なる場合、属性の比較をしても無駄なので次へ
                 continue;
             }
@@ -92,7 +98,9 @@ public class HtmlCompareUtil {
                     StringBuilder des = new StringBuilder("tagのtextが異なります。tag=");
                     des.append(tag).append(", old=").append(oldElement.text()).append(", new=")
                             .append(newElement.text());
-                    descriptions.add(des.toString());
+                    CompareDescription compareDescription = new CompareDescription(oldElement.toString(),
+                            newElement.toString(), des.toString());
+                    compareDescriptions.add(compareDescription);
                 }
             }
             // 属性を取得
@@ -101,9 +109,12 @@ public class HtmlCompareUtil {
             // 属性のサイズ比較
             if (oldAttributes.size() != newAttributes.size()) {
                 StringBuilder des = new StringBuilder("attribute数が異なります。tag=");
-                des.append(tag).append(", old=").append(oldAttributes.size()).append(", new=")
-                        .append(newAttributes.size());
-                descriptions.add(des.toString());
+                des.append(tag).append(", oldCount=").append(oldAttributes.size()).append(", newCount=")
+                        .append(newAttributes.size()).append(", oldAttribute=[").append(toLogFormat(oldAttributes))
+                        .append("]").append(", newAttribute=[").append(toLogFormat(newAttributes)).append("]");
+                CompareDescription compareDescription = new CompareDescription(oldElement.toString(),
+                        newElement.toString(), des.toString());
+                compareDescriptions.add(compareDescription);
                 continue;
             }
             // 属性ごとに比較
@@ -117,7 +128,9 @@ public class HtmlCompareUtil {
                     StringBuilder des = new StringBuilder("attributeの値が異なります。tag=");
                     des.append(tag).append(", attribute=").append(key).append(", old=").append(oldAttributes.get(key))
                             .append(", new=").append(newAttributes.get(key));
-                    descriptions.add(des.toString());
+                    CompareDescription compareDescription = new CompareDescription(oldElement.toString(),
+                            newElement.toString(), des.toString());
+                    compareDescriptions.add(compareDescription);
                 }
             }
             List<String> newAttributeKey = getAttributeKeyList(newAttributes);
@@ -130,11 +143,13 @@ public class HtmlCompareUtil {
                     StringBuilder des = new StringBuilder("attributeの値が異なります。tag=");
                     des.append(tag).append(", attribute=").append(key).append(", old=").append(oldAttributes.get(key))
                             .append(", new=").append(newAttributes.get(key));
-                    descriptions.add(des.toString());
+                    CompareDescription compareDescription = new CompareDescription(oldElement.toString(),
+                            newElement.toString(), des.toString());
+                    compareDescriptions.add(compareDescription);
                 }
             }
         }
-        return new CompareResult(o, n, !descriptions.isEmpty(), descriptions);
+        return new CompareResult(o, n, compareDescriptions, !compareDescriptions.isEmpty());
     }
 
     private static boolean isIgnoreText(Element oldElement, Element newElement) {
@@ -201,4 +216,11 @@ public class HtmlCompareUtil {
         return keyList;
     }
 
+    private static final String toLogFormat(Attributes attributes) {
+        Set<String> set = new TreeSet<>();
+        for (Attribute attribute : attributes.asList()) {
+            set.add(attribute.getKey());
+        }
+        return String.join(",", set);
+    }
 }

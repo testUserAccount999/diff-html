@@ -55,7 +55,7 @@ public class DiffMain {
                 System.exit(ERROR_CODE);
             }
         }
-        String outputPath = outputFilePath(args[0]);
+        String outputPath = outputFilePath();
         LOGGER.info("結果を出力します。output=" + outputPath);
         try {
             ResultWriter writer = new ResultWriter(outputPath);
@@ -68,11 +68,10 @@ public class DiffMain {
         LOGGER.info("End");
     }
 
-    private static String outputFilePath(String arg0) {
-        String parent = new File(arg0).getParent();
+    private static String outputFilePath() {
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern(DATE_FORMAT);
         LocalDateTime ldt = LocalDateTime.now();
-        return parent + "/" + formatter.format(ldt) + "_DiffHtml.xlsx";
+        return "./" + formatter.format(ldt) + "_DiffHtml.xlsx";
     }
 
     private static void validateArgs(String[] args) {

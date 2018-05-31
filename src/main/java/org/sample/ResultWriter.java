@@ -59,9 +59,10 @@ public class ResultWriter {
         for (Map.Entry<String, List<CompareResult>> entry : resultMap.entrySet()) {
             String fileName = entry.getKey();
             for (CompareResult compareResult : entry.getValue()) {
-                String oldText = compareResult.getOldText();
-                String newText = compareResult.getNewText();
-                for (String description : compareResult.getDescriptions()) {
+                for (CompareDescription compareDescription : compareResult.getCompareDescriptions()) {
+                    String description = compareDescription.getDescription();
+                    String oldText = compareDescription.getOldElement();
+                    String newText = compareDescription.getNewElement();
                     Row row = sheet.createRow(rowIndex++);
                     int columnIndex = 0;
                     Cell fileCell = row.createCell(columnIndex++);
