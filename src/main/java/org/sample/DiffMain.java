@@ -48,8 +48,6 @@ public class DiffMain {
             try {
                 List<CompareResult> result = HtmlCompareUtil.compare(oldFiles.get(key), newFiles.get(key), charset);
                 resultMap.put(key, result);
-            } catch (IllegalArgumentException e) {
-                LOGGER.warn(key + "はnewとoldで行数が異なります。", e);
             } catch (Throwable ｔ) {
                 LOGGER.error("エラーが発生しました。", ｔ);
                 System.exit(ERROR_CODE);
